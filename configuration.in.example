@@ -1,12 +1,13 @@
 % Physique:
-R=0.05
-r1=0.015
+R = 0.05
+r1 = 0.015
 epsilon_a = 1
-epsilon_b = 1
+epsilon_b = 4
+rho0 = 1
 uniform_rho_case = 1
 VR = 0
-N1=10
-N2=10
-output=output.out
+N1 = 1000
+N2 = 10000
+output = Ex4
 % Set to 0 to reduce printouts
-verbose=1 
+verbose = 1

@@ -6,10 +6,10 @@
 
 #include "ConfigFile.tpp"
 
-
 using namespace std;
 
 const double PI=3.1415926535897932384626433832795028841971e0;
+
 // Résolution d'un système d'équations linéaires par élimination de
 // Gauss-Jordan:
 template<class T>
@@ -24,7 +24,7 @@ solve(const vector<T>& diag,
     vector<T> new_rhs(rhs);
 
     for (int i = 1; i < diag.size(); ++i) {
-        double pivot = lower[i - 1] / new_diag[i - 1];
+        T pivot = lower[i - 1] / new_diag[i - 1];
         new_diag[i] -= pivot * upper[i - 1];
         new_rhs[i] -= pivot * new_rhs[i - 1];
     }
@@ -37,18 +37,26 @@ solve(const vector<T>& diag,
 
     return solution;
 }
-// Fonction pour la permittivité relative
-double epsilon(double r, double r1, double epsilon_a, double epsilon_b) {
+
+//TODO build the epsilon function
+double epsilon(double r, double r1, double epsilon_a, double epsilon_b)
+{
     return (r < r1) ? epsilon_a : epsilon_b;
 }
+const double epsilon0 = 1;
 
-// Fonction pour la densité de charge réduite
-double rho_epsilon(double r, double rho0, bool uniform_rho_case) {
-    return uniform_rho_case ? rho0 / EPSILON_0 : 0.0; // Ajuster si nécessaire
+//TODO build the rho_epsilon function (rho_lib / epsilon_0)
+double rho_epsilon(double r, double r1, double rho0, bool uniform_case)
+{
+    if (uniform_case)
+        return rho0;  // partout
+    else if (r < r1)
+        return rho0 * sin(PI * r / r1);
+    else
+        return 0.0;
 }
 
-int
-main(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
     
 
@@ -91,9 +99,9 @@ main(int argc, char* argv[])
     
     // Fichiers de sortie:
     string fichier = configFile.get<string>("output");
-    string fichier_phi = fichier+"_phi.out";
-    string fichier_E   = fichier+"_E.out";
-    string fichier_D   = fichier+"_D.out";
+    string fichier_phi = fichier+"_phi.txt";
+    string fichier_E   = fichier+"_E.txt";
+    string fichier_D   = fichier+"_D.txt";
 
     // Create our finite elements
     const int pointCount = N1 + N2 + 1; // Number of finite elements
@@ -104,40 +112,50 @@ main(int argc, char* argv[])
     vector<double> r(pointCount);
 
     //TODO build the nodes vector r
-    for (int i = 0; i <= N1; ++i) r[i] = i * h1;
-    for (int i = 1; i <= N2; ++i) r[N1 + i] = r1 + i * h2;
-    
+    for (int i = 0; i <= N1; ++i)
+        r[i] = r1 * i / N1;
+    for (int i = 1; i <= N2; ++i)
+        r[N1 + i] = r[N1] + (R - r1) * i / N2;     
     // Arrays initialization
     vector<double> h(pointCount-1); 	// Distance between grid points
     vector<double> midPoint(pointCount-1);  // Midpoint of each grid element
         
     // TODO build the h vector and midpoint vector
-    for (int i = 0; i < pointCount - 1; ++i) {
-        h[i] = r[i + 1] - r[i];
-        midPoint[i] = 0.5 * (r[i] + r[i + 1]);
-    }
 
+    for (int i = 0; i < N1 + N2; ++i)
+        h[i] = r[i + 1] - r[i];
+
+    for (int i = 0; i < N1 + N2; ++i)
+        midPoint[i] = 0.5 * (r[i] + r[i + 1]);
+ 
     // Construct the matrix and right-hand side
-    vector<double> diagonal(pointCount, 1.0);  // Diagonal
+    vector<double> diagonal(pointCount, 0.0);  // Diagonal
     vector<double> lower(pointCount - 1, 0.0); // Lower diagonal
     vector<double> upper(pointCount - 1, 0.0); // Upper diagonal
     vector<double> rhs(pointCount, 0.0);       // Right-hand-side
     
     // Loop over the intervals: add the contributions to matrix and rhs   
-    for (int k = 0; k < pointCount - 1; ++k) {
-        double eps_m = epsilon(midPoint[k], r1, epsilon_a, epsilon_b);
-        double rho_m = rho_epsilon(midPoint[k], rho0, uniform_rho_case);
+    for (int k = 0; k < pointCount-1; ++k) {
         
-        double coeff = eps_m / h[k];
-        lower[k] = -coeff;
-        upper[k] = -coeff;
-        diagonal[k] += 2 * coeff;
-        rhs[k] += rho_m * h[k];
-    }   
+                   
+        // TODO build the vectors diagonal, lower, upper, rhs
+        double coeff = epsilon(midPoint[k], r1, epsilon_a, epsilon_b) * midPoint[k] / h[k];
+        diagonal[k]     += coeff;
+        diagonal[k + 1] += coeff;
+        lower[k]         = -coeff;
+        upper[k]         = -coeff;
+    
+        double rho = rho_epsilon(midPoint[k], r1, rho0, uniform_rho_case);
+        double rhs_contrib = 0.5 * h[k] * rho * midPoint[k];
+        rhs[k]     += rhs_contrib;
+        rhs[k + 1] += rhs_contrib;
+    }  
 
     // TODO boundary condition at r=R (modify the lines below)
-    diagonal[pointCount - 1] = 1.0;
-    rhs[pointCount - 1] = VR;
+    lower[lower.size() - 1]       = 0.0;
+    diagonal[diagonal.size() - 1] = 1.0;
+    upper[upper.size() - 1]       = 0.0;
+    rhs[rhs.size() - 1]           = VR;
 
     // Solve the system of equations
     vector<double> phi = solve(diagonal, lower, upper, rhs);
@@ -146,8 +164,10 @@ main(int argc, char* argv[])
     vector<double> E(pointCount - 1, 0);
     vector<double> D(pointCount - 1, 0);
     for (int i = 0; i < E.size(); ++i) {
-        E[i] = -(phi[i + 1] - phi[i]) / h[i];
-        D[i] = epsilon(midPoint[i], r1, epsilon_a, epsilon_b) * E[i];
+        // TODO calculate E and D
+        double dphi = phi[i + 1] - phi[i];
+        E[i] = -dphi / h[i];
+        D[i] = epsilon0* epsilon(midPoint[i], r1, epsilon_a, epsilon_b) * E[i];
     }
 
     // Export data
@@ -191,7 +211,13 @@ main(int argc, char* argv[])
             ofs << midPoint[i] << " " << D[i] << endl;
         }
     }
+    // === Vérification console ===
+    std::cout << "Vérification des points aux bornes :" << std::endl;
+    std::cout << "r[0]    = " << r[0] << ", phi[0] = " << phi[0] << std::endl;
+    std::cout << "r[end]  = " << r[r.size() - 1] << ", phi[end] = " << phi[phi.size() - 1] << std::endl;
+
+    // Différence phi(0) - phi(R) pour info
+    std::cout << "Différence phi(0) - phi(R) = " << phi[0] - phi[phi.size() - 1] << std::endl;
 
     return 0;
 }
-
