@@ -7,18 +7,18 @@ uniform_rho_case = 1
 rho0 = 1
 VR = 0
 N1 = 10000
-N2 = 10000
+N2 = 100000
 output = output.out
 % Set to 0 to reduce printouts
 verbose = 1
 
 %Nouveaux paramètres à ajouter
-r2=0.03
-epsilon_c=6
-N3=10000
+r2 = 0.03
+epsilon_c = 6
+N3 = 10000
 
 
 % Pour la partie facultative j'ai mis eps = 1+alpha*r², ce qui a donné phi, E et D pour les différents alpha, pour les valeurs initiales c'est pareil que le cas de base pour la question b avec rho0=1e4, N1=1000,N2=N1 (de tter facon blc c juste un graphe), eps_a et eps_b servent plus à rien
 
-% Pour la partie facultative suivante j'ai fais 3 cylindress plutot que 2 avec 3 epsilon diff (ici 1, 3 et 6), N1=N2=N3=10000, r2=0.03, les epsilon sont constants et changent par saut, mais pour rho j'ai fait comme pour la partie b mais j'ai ajouté entre r2 et R une relation linéaire rho_epsilon=rho0*(r-r2)
+% Pour la partie facultative suivante j'ai fais 3 cylindress plutot que 2 avec 3 epsilon diff (ici 1, 3 et 6), N1 = N2=N3=10000, r2=0.03, les epsilon sont constants et changent par saut, mais pour rho j'ai fait comme pour la partie b mais j'ai ajouté entre r2 et R une relation linéaire rho_epsilon=rho0*(r-r2)
 

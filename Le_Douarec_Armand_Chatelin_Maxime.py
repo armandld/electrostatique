@@ -7,7 +7,7 @@ import os
 # Parameters
 # TODO adapt to what you need (folder path executable input filename)
 executable = 'Exercice4'  # Name of the executable (NB: .exe extension is required on Windows)
-repertoire = r"/home/chatelin/Desktop/MyFiles/Electrostatique_physNum"
+repertoire = r"/Users/Sayu/Desktop/electrostatique"
 os.chdir(repertoire)
 
 
@@ -255,7 +255,6 @@ plt.grid(True, linestyle="--", alpha=0.3)
 plt.legend()
 plt.title("Différence entre potentiel numérique et analytique")
 
-plt.show()
 '''
 plt.xlabel("$r$ [m]")
 plt.ylabel("$\\phi(r)$ [V]")
@@ -429,7 +428,12 @@ plt.title("Champ de déplacement $D_r(r)$ pour divers $\\alpha$")
 plt.show()
 
 
-
+'''
+plt.figure()
+k1 = np.linspace(0,0.015,1000)
+k2 = np.linspace(0.015,0.05,1000)
+t1 = (1e4)*np.sin((np.pi)*k1/0.015)
+t2 = k2*0
 for N1 in [1000]:
     N2 = N1
     output_file = f"N1={N1}N2={N2}"
@@ -443,7 +447,7 @@ for N1 in [1000]:
     d_rD_dr = (r[1:] * D[1:] - r[:-1] * D[:-1]) / dr
     div_D = d_rD_dr / r_mid
 
-    plt.plot(r_mid, div_D, label=f"div(D) pour N={N1}")
+    #plt.plot(r_mid, div_D, label=f"div(D) pour N={N1}")
 
     # Charge totale via div(D)
     rho_num = div_D
@@ -459,6 +463,10 @@ for N1 in [1000]:
 
     print(f"N={N1} : Q_num = {Q_num:.3e}, Q_lib = {Q_lib:.3e}, Q_pol = {Q_pol:.3e}")
 
+plt.plot(k1,t1,linestyle = "-",color = "red")
+plt.plot(k2,t2,linestyle = "-",color = "red", label=f"div(D) pour N={N1}")
+plt.plot(k1,t1,linestyle = "--",color = "blue")
+plt.plot(k2,t2,linestyle = "--",color = "blue", label="$\\rho_{lib}(r)$")
 plt.xlabel("$r$ [m]")
 plt.ylabel("$\\nabla$ $\cdot$ $D(r)$")
 plt.title("Vérification de $\\nabla$ $\cdot$ $D(r)=ρ_{lib}(r)$")
@@ -466,5 +474,9 @@ plt.grid(True, linestyle="--", alpha=0.3)
 plt.legend()
 
 plt.show()
-'''
 
+
+k1 = np.linspace(0,0.015,1000)
+k2 = np.linspace(0.015,0.05,1000)
+t1 = (1e4)*np.sin((np.pi)*k1/0.015)
+t2 = k2*0
